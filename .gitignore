@@ -1,0 +1,12 @@
+# Never put actual captures, plaintext evidence, key logs or cryptographic keys in Git.
+*.pcap
+*.pcapng
+*.keylog
+*.sealed
+*.wrapped
+.env
+secrets/
+evidence/
+bundles/
+*.test
+coverage.out
