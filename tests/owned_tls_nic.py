@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import stat
 import subprocess
 import tempfile
 import time
@@ -13,7 +14,13 @@ from owned_tls_fixture import exchange, REQUEST_MARKER, RESPONSE_MARKER
 
 
 def command(*args, **kwargs):
-    return subprocess.run(args, capture_output=True, text=True, check=True, **kwargs)
+    result = subprocess.run(args, capture_output=True, text=True, **kwargs)
+    if result.returncode:
+        # Preserve bounded diagnostics but never dump packet payloads or TLS keys.
+        raise RuntimeError(
+            f'{args[0]} exit={result.returncode}, stderr_tail={result.stderr.splitlines()[-3:]!r}'
+        )
+    return result
 
 
 def capture_and_validate(root, full):
@@ -25,12 +32,17 @@ def capture_and_validate(root, full):
         nonlocal capture
         if not full:
             return
-        capture = subprocess.Popen([
-            'sudo', '-n', 'tcpdump', '-Z', 'root', '--immediate-mode',
-            '-i', 'lo', '-U', '-s', '0', '-w', str(pcap_path),
-            'tcp', 'port', str(port),
-        ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
-           start_new_session=True)
+        # The unprivileged test owner creates the output file with mode 0600.
+        # Privileged tcpdump writes through an inherited stdout descriptor, so
+        # TShark never needs root access to open the evidence artifact.
+        with pcap_path.open('xb') as capture_file:
+            os.chmod(pcap_path, 0o600)
+            capture = subprocess.Popen([
+                'sudo', '-n', 'tcpdump', '-Z', 'root', '--immediate-mode',
+                '-i', 'lo', '-U', '-s', '0', '-w', '-',
+                'tcp', 'port', str(port),
+            ], stdout=capture_file, stderr=subprocess.PIPE, text=True,
+               start_new_session=True)
         time.sleep(1.3)
         if capture.poll() is not None:
             raise RuntimeError('capture exited before the owned TLS handshake')
@@ -51,6 +63,10 @@ def capture_and_validate(root, full):
             if size <= 24 or capture.returncode not in (0, -signal.SIGINT, 130):
                 raise AssertionError(f'NIC capture failed: exit={capture.returncode}, '
                                      f'bytes={size}, status={(stderr or "").splitlines()[-5:]!r}')
+            info = pcap_path.stat()
+            if (info.st_uid != os.getuid() or not stat.S_ISREG(info.st_mode) or
+                    stat.S_IMODE(info.st_mode) != 0o600):
+                raise AssertionError('PCAP ownership/permissions violated at decoder boundary')
             frames = command('tshark', '-r', str(pcap_path),
                              '-T', 'fields', '-e', 'frame.number').stdout.splitlines()
             if len(frames) < 6:
