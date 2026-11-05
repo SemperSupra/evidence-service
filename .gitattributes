@@ -1,0 +1,6 @@
+# Keep Go source byte-identical on Windows, macOS and Linux.
+*.go text eol=lf
+*.mod text eol=lf
+*.sum text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
