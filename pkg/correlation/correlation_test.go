@@ -88,3 +88,23 @@ func TestSameConnectionDifferentRequestsAreNotProven(t *testing.T) {
 		t.Fatalf("connection-only should be weak metadata: %+v", r)
 	}
 }
+
+// A stream ID is usually scoped to a connection; the same value can reappear
+// after reconnect. Do not upgrade that coincidence into a correlation.
+func TestStreamIDWithoutEpochFailsClosed(t *testing.T) {
+	a, b := base(), base()
+	a.ConnectionEpoch, b.ConnectionEpoch = "", ""
+	r, err := Join(a, b)
+	if err != nil || r.Grade != Unknown {
+		t.Fatalf("reused stream without epoch joined: %+v %v", r, err)
+	}
+}
+
+func TestOneSidedEpochCannotDisambiguateStream(t *testing.T) {
+	a, b := base(), base()
+	b.ConnectionEpoch = ""
+	r, err := Join(a, b)
+	if err != nil || r.Grade != Unknown {
+		t.Fatalf("partial connection identity joined: %+v %v", r, err)
+	}
+}
