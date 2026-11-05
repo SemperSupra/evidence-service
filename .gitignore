@@ -10,3 +10,5 @@ evidence/
 bundles/
 *.test
 coverage.out
+__pycache__/
+*.pyc

@@ -5,8 +5,8 @@
 | Source safety | Public-source inspection, no keys/network targets | source only | maintainer release review |
 | Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | synthetic tests | KMS, external signature, immutable store, 64-bit streaming |
 | Correlation | Multi-leg/task join hints with ambiguity and no fabricated authority | synthetic tests | real CDP / MCP / QUIC clocks and reconnects |
-| Packet source | Genuine NIC/OS capture | NOT RUN | admitted test host with packet privileges |
-| Decryption | TShark using matching owned test-data secrets | NOT RUN | controlled independent verification of actual PCAP |
+| Packet source | Owned Linux loopback TCP TLS 1.3 via real tcpdump packet vantage | PUBLIC-GHA TEST CANDIDATE | review actual run receipts; other platforms and independent NIC still open |
+| Decryption | TShark on the exact owned kernel PCAP with key log, positive + no-key negative | PUBLIC-GHA TEST CANDIDATE | receipt and independent review needed; HTTP2/QUIC/rekey remains |
 | Service interface | Typed human, automation and agent API with same policy | NOT RUN | accessible UI, CLI, MCP, authorization HIL |
 | Cloud CI | Public source-safe tri-OS build and correlation tests, vault tests on Linux/macOS, Linux race detector | workflow configured | completed Actions run; Windows custody ACL NOT QUALIFIED |
 

@@ -57,3 +57,16 @@ jobs:
         with: { go-version-file: go.mod, cache: false }
       - name: Race detector
         run: go test -race ./... -timeout=5m
+  owned-nic-tls-test:
+    name: owned-test TLS 1.3 NIC capture and TShark
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - name: Install open-source packet dissectors
+        run: |
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tcpdump tshark
+      - name: Genuine OS packet capture of owned loopback TLS fixture
+        run: python3 tests/owned_tls_nic.py --full
