@@ -1,0 +1,54 @@
+name: Source-safe synthetic qualification
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  go-contracts:
+    name: go-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Go format
+        shell: bash
+        run: test -z "$(gofmt -l $(git ls-files '*.go'))"
+      - name: Go vet
+        run: go vet ./...
+      - name: Cross-platform compilation
+        run: go build ./...
+      - name: Contract tests (three independent runs)
+        shell: bash
+        run: |
+          if [[ "$RUNNER_OS" == "Windows" ]]; then
+            # Windows file ACL validation is NOT implemented yet. Refuse to
+            # imply that POSIX permission checks qualify Windows custody.
+            go test ./pkg/correlation ./cmd/evidenced -count=3 -timeout=5m
+            echo 'EVIDENCE_VAULT_WINDOWS=NOT_QUALIFIED (compile only)'
+          else
+            go test ./... -count=3 -timeout=5m
+          fi
+      - name: Capabilities are not privileged
+        run: go run ./cmd/evidenced capabilities
+  race:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: { persist-credentials: false }
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod, cache: false }
+      - name: Race detector
+        run: go test -race ./... -timeout=5m
