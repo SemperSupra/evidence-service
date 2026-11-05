@@ -11,8 +11,10 @@ transport-leg labels are not trusted solely because the emitter supplied them.
 | OpenAI tunnel client | OpenAI-owned public tunnel client + SupraChat | validated opt-in `traceparent` | source-confirmed trace forwarding; no hosted key access |
 | Cloudflare Quick Tunnel | SupraChat synthetic lab | nonce/trace fixture | real encrypted leg, origin events, reconnect handling |
 
-**Join guidance:** equal `session_id`, `transport_leg_id` and a transport-native
-`connection_epoch` or `stream_id` may produce `CORRELATED_METADATA_ONLY`. It is
+**Join guidance:** equal `session_id` and `transport_leg_id` **plus a nonempty,
+matching `connection_epoch` from both sources** may produce `CORRELATED_METADATA_ONLY`.
+A `stream_id` without two matching connection epochs is ambiguous across reconnects;
+matching `traceparent` alone is never sufficient. It is
 not `VERIFIED`, and it does not imply permission, content authenticity, complete
 capture or one-to-one MCP-to-TLS mapping. Future signed collector attestations
 are necessary to upgrade evidence confidence.
