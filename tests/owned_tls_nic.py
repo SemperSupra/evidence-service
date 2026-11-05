@@ -85,9 +85,10 @@ def fixture(directory, capture):
             # A separate packet vantage at the OS loopback interface. Do not
             # substitute user-space relayed/reconstructed packets for this.
             capture_proc = subprocess.Popen([
-                'sudo', '-n', 'tcpdump', '-i', 'lo', '-U', '-s', '0',
+                'sudo', '-n', 'tcpdump', '-Z', 'root', '-i', 'lo', '-U', '-s', '0',
                 '-w', str(capture_path), 'tcp', 'port', str(port),
-            ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+            ], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+               start_new_session=True)
             time.sleep(1.3)
             if capture_proc.poll() is not None:
                 raise RuntimeError('tcpdump exited before test handshake')
@@ -136,15 +137,26 @@ def fixture(directory, capture):
         }
         if capture:
             if capture_proc.poll() is None:
-                capture_proc.send_signal(signal.SIGINT)
+                # Send SIGINT to the independent capture process group, not
+                # just sudo's parent PID. tcpdump must flush its pcap writer.
+                time.sleep(0.4)
+                os.killpg(capture_proc.pid, signal.SIGINT)
             try:
                 stdout, stderr = capture_proc.communicate(timeout=10)
             except subprocess.TimeoutExpired:
                 capture_proc.kill()
                 capture_proc.communicate()
                 raise RuntimeError('tcpdump shutdown timed out')
-            if capture_proc.returncode != 0 or not capture_path.exists() or capture_path.stat().st_size <= 24:
-                raise AssertionError(f'kernel packet capture failed ({capture_proc.returncode})')
+            pcap_bytes = capture_path.stat().st_size if capture_path.exists() else 0
+            if capture_proc.returncode not in (0, -signal.SIGINT, 130) or pcap_bytes <= 24:
+                # tcpdump status is diagnostic only; never print payloads or keys.
+                diagnostic = (stderr or '').splitlines()[-5:]
+                raise AssertionError(f'kernel capture failed: exit={capture_proc.returncode}, '
+                                     f'bytes={pcap_bytes}, status={diagnostic!r}')
+            frame_numbers = command('tshark', '-r', str(capture_path),
+                                    '-T', 'fields', '-e', 'frame.number').stdout.splitlines()
+            if len(frame_numbers) < 6:
+                raise AssertionError(f'insufficient original captured frames: {len(frame_numbers)}')
             # Only a synthetic TLS session has its secrets made available here.
             # The original PCAP is left encrypted; no DSB or plaintext is written to it.
             tshark = command('tshark', '-r', str(capture_path),
@@ -167,12 +179,13 @@ def fixture(directory, capture):
                 'tshark_authenticated_decryption': True,
                 'capture_sha256': hashlib.sha256(pcap).hexdigest(),
                 'capture_bytes': len(pcap),
+                'original_frame_count': len(frame_numbers),
                 'missing_key_negative': True,
             })
         print('OWNED_TLS_NIC_RECEIPT=' + json.dumps(result, sort_keys=True), flush=True)
     finally:
         if capture_proc is not None and capture_proc.poll() is None:
-            capture_proc.send_signal(signal.SIGINT)
+            os.killpg(capture_proc.pid, signal.SIGINT)
             try:
                 capture_proc.communicate(timeout=5)
             except subprocess.TimeoutExpired:
