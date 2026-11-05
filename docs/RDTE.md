@@ -13,3 +13,13 @@
 **Sequential promotion rule:** no claim of service-ready, network-decrypted or production authorized status until the applicable gate is exercised on exact source, independently reviewed, and recorded in DLE. Source-only and synthetic passes cannot replace a real packet witness.
 
 **Repository hygiene:** one issue for shared workset and phase gates, bounded PRs; do not create separate architecture issues for BrowserParity or SupraChat; merge or close accepted/superseded PRs, record failure provenance, and periodically compare `main`, workflows, PRs and stale branches. Never force-push or delete branches without dependency reconciliation.
+
+## Owned NIC test first-failure history
+
+Public CI runs `42128458604` and `42128843007` demonstrated the synthetic
+endpoint, Go contracts and Linux/macOS/Windows jobs, but the real NIC job
+failed: tcpdump reported **0 packets captured** despite **30 received by its
+filter** on the second run. No real packet recovery/decryption claim is
+accepted. The next test-only candidate enables libpcap immediate packet
+delivery and a 2-second drain before stopping the capture group. It requires
+an exact new public CI run before the packet gate can be checked off.
