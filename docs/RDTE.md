@@ -3,12 +3,12 @@
 | Gate | Method | R0 acceptance | Remaining |
 | --- | --- | --- | --- |
 | Source safety | Public-source inspection, no keys/network targets | source only | maintainer release review |
-| Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | synthetic tests | KMS, external signature, immutable store, 64-bit streaming |
+| Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | synthetic vault tests; independent Ed25519 attestation primitive accepted in PR #6 | Integration of signing at seal/open, immutable store, large streaming, live KMS and durable recovery |
 | Correlation | Multi-leg/task join hints with ambiguity and no fabricated authority | synthetic tests | real CDP / MCP / QUIC clocks and reconnects |
 | Packet source | Owned Linux loopback TCP TLS 1.3 via genuine tcpdump loopback packet vantage | PASS: public GHA 42130441758, 15 frames / 6109 bytes | independent physical NIC, other platforms, HTTP/2 and QUIC still open |
 | Decryption | TShark on exact owned kernel PCAP with test-data key log, both directions and no-key negative | PASS: public GHA 42130441758 | independent witness, multi-stream HTTP/2, QUIC and key-update tests remain |
-| Service interface | Typed human, automation and agent API with same policy | NOT RUN | accessible UI, CLI, MCP, authorization HIL |
-| Cloud CI | Public source-safe tri-OS build and correlation tests, vault tests on Linux/macOS, Linux race detector | 5/5 jobs PASS at 42130441758 | Windows vault custody ACL NOT QUALIFIED |
+| Service interface | One authorization policy across human/AT, automation and agent clients | fail-closed pure policy tests accepted in PR #8 | trusted identity/grant store, live effect enforcement, accessible UI/CLI/MCP and authorization HIL |
+| Cloud CI | Public source-safe tri-OS builds, Linux/macOS Go tests, race detector and owned-test NIC/TShark | PR #6, #7 and #8 exact-head 5/5 PASS | Windows vault custody ACL NOT QUALIFIED; live OpenBao and independent vantage remain OPEN |
 
 **Sequential promotion rule:** no claim of service-ready, network-decrypted or production authorized status until the applicable gate is exercised on exact source, independently reviewed, and recorded in DLE. Source-only and synthetic passes cannot replace a real packet witness.
 
@@ -56,3 +56,11 @@ data was used. PCAP/keylog/cert private key are deleted in the temporary test
 directory; CI retains sanitized hash-only receipt. Windows vault permissions,
 production key custody, multi-connection decryption and multi-vantage causality
 remain unqualified.
+
+## November 6, 2026 source-safe extension receipts
+
+- [PR #6](https://github.com/SemperSupra/evidence-service/pull/6), merge `5ab9804`: independently trusted Ed25519 manifest signature primitive; public Actions [42133859631](https://github.com/SemperSupra/evidence-service/actions/runs/42133859631) 5/5 PASS. The service does not yet write signed manifest receipts as part of its retention transaction.
+- [PR #7](https://github.com/SemperSupra/evidence-service/pull/7), merge `eb893bd`: derived-context DEK wrap/unwrap/rewrap OpenBao adapter; public Actions [42152659894](https://github.com/SemperSupra/evidence-service/actions/runs/42152659894) 5/5 PASS. Unit tests use an HTTP mock, not a live OpenBao instance or durable key store.
+- [PR #8](https://github.com/SemperSupra/evidence-service/pull/8), merge `5ffcd47`: common fail-closed admission decision primitive; [first CI 42152663498](https://github.com/SemperSupra/evidence-service/actions/runs/42152663498) failed formatting and unused test variables, corrected in-place and [42152972331](https://github.com/SemperSupra/evidence-service/actions/runs/42152972331) passed 5/5. No verified identity, grants database or deployed actuator is claimed.
+
+**Housekeeping:** root DLE #1 remains authoritative; closed/accepted PRs are squash-merged and not recreated as overlapping issues. Repo `delete_branch_on_merge=false`. Historical branch refs may remain despite merged content; no automatic pruning or force-push workaround is authorized through this connector. For artifact placement, public Git stores code, tests and sanitized receipts only; encrypted restricted captures and key custody remain outside the public repo.
