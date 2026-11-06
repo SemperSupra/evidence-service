@@ -1,0 +1,34 @@
+name: Isolated OpenBao Raft snapshot rollback RDT&E
+on:
+  pull_request:
+    paths:
+      - 'tests/openbao_raft_snapshot_rdte.sh'
+      - '.github/workflows/openbao-raft-rdte.yml'
+      - 'pkg/kmsbundle/**'
+  push:
+    branches: [main]
+    paths:
+      - 'tests/openbao_raft_snapshot_rdte.sh'
+      - '.github/workflows/openbao-raft-rdte.yml'
+      - 'pkg/kmsbundle/**'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  raft-snapshot:
+    name: isolated owned-test Raft snapshot rollback and restart
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Real isolated OpenBao Raft snapshot rollback with signed synthetic bundle
+        shell: bash
+        run: bash tests/openbao_raft_snapshot_rdte.sh
