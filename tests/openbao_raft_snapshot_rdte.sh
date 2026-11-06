@@ -88,30 +88,16 @@ echo "::add-mask::$scoped_token"
 
 OPENBAO_TEST_ADDR=http://127.0.0.1:8200 OPENBAO_TEST_TOKEN="$scoped_token" \
   OPENBAO_PERSIST_PHASE=seal OPENBAO_PERSIST_ROOT="$scratch" \
-  go test ./pkg/kmsbundle -run '^TestPersistentOpenBaoRestart
-start_server
-sealed_status="$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8200/v1/sys/health)"
-if [[ "$sealed_status" != 503 ]]; then
-  echo "Restart did not preserve sealed state (HTTP $sealed_status)" >&2
-  exit 1
-fi
-docker exec -e BAO_ADDR="http://127.0.0.1:8200" "$container" \
-  bao operator unseal "$unseal" >/dev/null
-OPENBAO_TEST_ADDR=http://127.0.0.1:8200 OPENBAO_TEST_TOKEN="$scoped_token" \
-  OPENBAO_PERSIST_PHASE=recover OPENBAO_PERSIST_ROOT="$scratch" \
   go test ./pkg/kmsbundle -run '^TestPersistentOpenBaoRestart$' -count=1 -timeout=90s -v
-echo "RAFT_SNAPSHOT=ISOLATED_SAME_NODE_ROLLBACK_AND_RESTART_PASS; CROSS_NODE_DISASTER_RECOVERY=NOT_QUALIFIED; HA=NOT_QUALIFIED"
- -count=1 -timeout=90s -v
 
-# Snapshot is restricted evidence: it contains test-only vault key state.
-# It is neither uploaded nor logged. Validate that a post-snapshot mutation
-# actually disappears after restore; a no-op restore must fail the test.
+# The Raft snapshot contains synthetic-but-sensitive key material. It is
+# never exposed as an Actions artifact or retained outside this runner.
 docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
   bao operator raft snapshot save /tmp/owned-raft.snap >/dev/null
 docker cp "$container:/tmp/owned-raft.snap" "$scratch/owned-raft.snap" >/dev/null
 chmod 0600 "$scratch/owned-raft.snap"
 if [[ ! -s "$scratch/owned-raft.snap" ]]; then
-  echo "Synthetic Raft snapshot is missing or empty" >&2
+  echo "Synthetic Raft snapshot is empty or absent" >&2
   exit 1
 fi
 docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
@@ -120,11 +106,10 @@ docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$con
   bao read transit/keys/after-snapshot-only >/dev/null
 docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
   bao operator raft snapshot restore /tmp/owned-raft.snap >/dev/null
-# Restore must roll the test-only marker back. A failed read is expected;
-# redact CLI stderr because error formatting is not part of this receipt.
+# A no-op restore is a failed qualification; the later key must be absent.
 if docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
     bao read transit/keys/after-snapshot-only >/dev/null 2>&1; then
-  echo "Raft snapshot did not roll back post-snapshot key state" >&2
+  echo "Raft snapshot failed to roll back post-snapshot state" >&2
   exit 1
 fi
 docker rm -f "$container" >/dev/null
@@ -139,4 +124,4 @@ docker exec -e BAO_ADDR="http://127.0.0.1:8200" "$container" \
 OPENBAO_TEST_ADDR=http://127.0.0.1:8200 OPENBAO_TEST_TOKEN="$scoped_token" \
   OPENBAO_PERSIST_PHASE=recover OPENBAO_PERSIST_ROOT="$scratch" \
   go test ./pkg/kmsbundle -run '^TestPersistentOpenBaoRestart$' -count=1 -timeout=90s -v
-echo "PERSISTENT_OPENBAO=RESTART_SYNTHETIC_PASS; BACKUP_RESTORE=NOT_QUALIFIED; HA=NOT_QUALIFIED"
+echo "RAFT_SNAPSHOT=ISOLATED_SAME_NODE_ROLLBACK_AND_RESTART_PASS; CROSS_NODE_DISASTER_RECOVERY=NOT_QUALIFIED; HA=NOT_QUALIFIED"
