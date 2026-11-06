@@ -24,9 +24,9 @@ func fixture(t *testing.T) (*Store, string, controller.ProposalIntent) {
 		t.Fatal(err)
 	}
 	intent := controller.ProposalIntent{
-		SessionID: "synthetic-session-1",
-		SubjectID: "actor-a",
-		GrantID: "grant-1",
+		SessionID:      "synthetic-session-1",
+		SubjectID:      "actor-a",
+		GrantID:        "grant-1",
 		IdempotencyKey: "owned-test-retry-key-0001",
 	}
 	return store, root, intent
@@ -161,8 +161,8 @@ func TestControllerUsesSameDurableQueueAndRevocation(t *testing.T) {
 	}}
 	ctrl := controller.Controller{
 		Policy: admission.Engine{Store: grants},
-		Queue: q,
-		Clock: func() time.Time { return now },
+		Queue:  q,
+		Clock:  func() time.Time { return now },
 	}
 	actor := admission.Principal{SubjectID: "actor-a", Role: admission.Agent, Authenticated: true}
 	idempotencyKey := "synthetic-approval-retry-01"
