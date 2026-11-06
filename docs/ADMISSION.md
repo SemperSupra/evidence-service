@@ -25,9 +25,9 @@ all future clients; do not clone policy logic in separate UI or MCP adapters.
 
 ## Promotion gates
 
-1. **DONE (pure decision/controller tests):** exact-subject/session/action/time checks, revocation, disabled approvals, unknown-operation and agent negatives, plus a nonprivileged shared metadata/replay-proposal controller accepted in PR #12. No real replay execution or key retrieval is exposed.
+1. **DONE (pure decision/controller tests):** exact-subject/session/action/time checks, revocation, disabled approvals, unknown-operation and agent negatives, plus a nonprivileged shared metadata/replay-proposal controller accepted in PR #12, scoped idempotency contract #19, and owner-private proposal store #20 with independent-process qualification #24. No real replay execution or key retrieval is exposed.
 2. **OPEN:** verified caller identity, trusted grant issuer/store, authenticated
-   source receipts, durable revocation and audit; cross-process behavior.
+   source receipts, durable revocation and audit; cross-host/process identity admission (only file-store deduplication across processes has been tested).
 3. **OPEN:** one API shared by accessible human UI, CLI and MCP, plus end-to-end
    concurrency, replay-request vs replay-execution and cancellation tests.
 4. **OPEN:** real endpoint capture and vault-custody controls; key material

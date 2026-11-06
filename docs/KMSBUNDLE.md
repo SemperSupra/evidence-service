@@ -43,16 +43,16 @@ The public unit suite uses synthetic fixtures and an **in-memory fake** implemen
   filesystem openat/TOCTOU proof, Windows ACL custody, immutable storage or
   robust recovery after abrupt process termination. The public Windows CI
   lane only compiles this package, not its POSIX custody test suite.
-- **Isolated, ephemeral full-bundle Transit interoperability is accepted.** Persistent OpenBao seal/unseal, backup/restore across process or host restart, rewrapping and re-signing stored envelope records, immutable storage, real end-to-end access approval, independent revocation and human/automation/MCP effect-boundary tests remain **OPEN**.
+- **Isolated full-bundle Transit interoperability, file-backed restart and single-node Raft snapshot rollback/restart are accepted synthetic tests** (PRs #16/#18/#23). Cross-host/fresh-node disaster recovery, HA, authenticated audit, stored-envelope migration, immutable storage, real access approval, application-layer revocation and human/automation/MCP effect-boundary tests remain **OPEN**.
 - No production TLS session-key logging, live third-party tunnels, sovereign
   environment data or private evidence is admitted in public source or CI.
 
 ## Next promotion gate
 
-Admit a persistent *isolated* OpenBao backend with retained storage and
-restricted test keys; qualify service restart/unseal, backup/restore, deliberate
-key rotation, audit trails, and recovery of the exact signed bundle after
-restart. Separately qualify immutable storage and authorized effect-boundary
-enforcement. The signing key must remain independent of Transit and the
+Extend the accepted isolated Raft snapshot test to a *fresh* recovery node or
+clean storage, retain strict seal-key consistency, independently qualify
+audit trails and key retirement, and challenge snapshot corruption and network
+partition behavior. Separately qualify immutable artifact storage and
+trusted, authorized effect-boundary enforcement. The signing key must remain independent of Transit and the
 artifact store. See authoritative
 [Evidence Service DLE #1](https://github.com/SemperSupra/evidence-service/issues/1).

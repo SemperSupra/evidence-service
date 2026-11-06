@@ -32,12 +32,14 @@ drill. Unit tests use a localhost synthetic HTTP mock. Separate isolated public-
    redacted-error negative tests.
 2. **DONE (disposable isolated server):** actual OpenBao-derived key,
    scoped-token ACL negatives, rotate/rewrap and old-ciphertext recovery
-   (PRs #10/#13). **OPEN:** persistent restart, backup/restore and audit.
+   (PRs #10/#13). **DONE (isolated test):** file-backed restart in PR #18 and single-node Raft snapshot rollback/restart in PR #23. **OPEN:** fresh-node/off-host disaster recovery, HA and audit.
 3. **DONE (test-only bundle composition):** signed manifest + wrapped bundle
    KEK and full live OpenBao synthetic recovery (PRs #15/#16). **OPEN:** real
    approved worker identity and effect-boundary admission; agents must never
    receive a raw-key retrieval endpoint.
-4. **OPEN:** cross-platform host custody, auditing/revocation, failure and
-   network-partition drills. Do not claim production KMS.
+4. **DONE (disposable worker token):** real revoke-self denies subsequent
+   wrap/unwrap in PR #21. **OPEN:** cross-platform host custody, trusted audit,
+   production revocation latency, network-partition drills and key retirement.
+   Do not claim production KMS.
 
 API reference: https://openbao.org/docs/next/api/secret/transit/
