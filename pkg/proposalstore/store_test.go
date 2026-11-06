@@ -156,7 +156,7 @@ func TestControllerUsesSameDurableQueueAndRevocation(t *testing.T) {
 	grants := &grantStore{grant: admission.Grant{
 		ID: "grant-1", SubjectID: "actor-a", SessionID: "synthetic-session-1",
 		IssuerID: "test-authority", Approved: true,
-		Actions: map[admission.Operation]bool{admission.RequestReplay: true},
+		Actions:   map[admission.Operation]bool{admission.RequestReplay: true},
 		NotBefore: now.Add(-time.Minute), ExpiresAt: now.Add(time.Minute),
 	}}
 	ctrl := controller.Controller{
