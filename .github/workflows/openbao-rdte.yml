@@ -3,11 +3,13 @@ on:
   pull_request:
     paths:
       - 'pkg/transitclient/**'
+      - 'pkg/kmsbundle/**'
       - '.github/workflows/openbao-rdte.yml'
   push:
     branches: [main]
     paths:
       - 'pkg/transitclient/**'
+      - 'pkg/kmsbundle/**'
       - '.github/workflows/openbao-rdte.yml'
 permissions:
   contents: read
@@ -71,4 +73,7 @@ jobs:
           OPENBAO_TEST_ADDR="http://127.0.0.1:8200" OPENBAO_TEST_TOKEN="${scoped_token}" \
             OPENBAO_TEST_ADMIN_TOKEN="${root_token}" \
             go test ./pkg/transitclient -run '^TestLiveOpenBao(Transit|Rotation)$' -count=1 -timeout=90s -v
-          echo 'OPENBAO_RDT_E=ISOLATED_SYNTHETIC_ROTATION_PASS; DURABLE_RESTORE=NOT_QUALIFIED'
+          OPENBAO_TEST_ADDR="http://127.0.0.1:8200" OPENBAO_TEST_TOKEN="${scoped_token}" \
+            OPENBAO_TEST_ADMIN_TOKEN="${root_token}" \
+            go test ./pkg/kmsbundle -run '^TestLiveKMSBundle$' -count=1 -timeout=90s -v
+          echo 'OPENBAO_RDT_E=ISOLATED_SYNTHETIC_FULL_BUNDLE_PASS; DURABLE_RESTORE=NOT_QUALIFIED'
