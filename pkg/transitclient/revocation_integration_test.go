@@ -1,6 +1,7 @@
 package transitclient
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"io"
@@ -43,7 +44,7 @@ func TestLiveOpenBaoWorkerRevocation(t *testing.T) {
 		t.Fatalf("pre-revocation key wrapping failed: %v", err)
 	}
 	recovered, err := client.UnwrapKey(ctx, wrapped, scope)
-	if err != nil || len(recovered) != 32 {
+	if err != nil || !bytes.Equal(recovered, dek) {
 		t.Fatalf("pre-revocation recovery failed: %v", err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, address+"/v1/auth/token/revoke-self", nil)
