@@ -69,5 +69,6 @@ jobs:
             python3 -c 'import json,sys; print(json.load(sys.stdin)["auth"]["client_token"])')"
           echo "::add-mask::${scoped_token}"
           OPENBAO_TEST_ADDR="http://127.0.0.1:8200" OPENBAO_TEST_TOKEN="${scoped_token}" \
-            go test ./pkg/transitclient -run '^TestLiveOpenBaoTransit$' -count=1 -timeout=90s -v
-          echo 'OPENBAO_RDT_E=ISOLATED_SYNTHETIC_PASS; DURABLE_RESTORE=NOT_QUALIFIED'
+            OPENBAO_TEST_ADMIN_TOKEN="${root_token}" \
+            go test ./pkg/transitclient -run '^TestLiveOpenBao(Transit|Rotation)$' -count=1 -timeout=90s -v
+          echo 'OPENBAO_RDT_E=ISOLATED_SYNTHETIC_ROTATION_PASS; DURABLE_RESTORE=NOT_QUALIFIED'
