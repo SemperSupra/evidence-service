@@ -44,7 +44,7 @@ func TestLiveOpenBaoRotation(t *testing.T) {
 
 	rotateURL := addr + "/v1/transit/keys/evidence-test/rotate"
 	httpClient := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout:       5 * time.Second,
 		CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse },
 	}
 	rotate := func(token string) int {
