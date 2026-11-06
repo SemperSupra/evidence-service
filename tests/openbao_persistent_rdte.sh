@@ -26,6 +26,9 @@ listener "tcp" {
   tls_disable = true
 }
 CONFIG
+# Configuration contains no secrets; the container's unprivileged user
+# must be able to read the bind-mounted file.
+chmod 0644 "$scratch/openbao.hcl"
 
 docker volume create "$volume" >/dev/null
 start_server() {
