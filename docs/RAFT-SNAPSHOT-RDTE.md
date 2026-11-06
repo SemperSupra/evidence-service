@@ -9,8 +9,10 @@ snapshot, unseal share and test tokens on exit. Nothing is uploaded.
 Procedure: initialize and unseal an isolated Raft server; create a derived,
 nonexportable Transit test key and a restricted worker token; seal a signed
 three-artifact synthetic bundle; save a native Raft snapshot; create an
-additional post-snapshot test key; restore the snapshot and require that
-the later key disappears. Then restart the OpenBao container with its
+additional post-snapshot test key; **attempt to restore a deliberately
+truncated copy of the snapshot and require rejection while the later key
+remains present**; then restore the valid snapshot and require that the
+later key disappears. Then restart the OpenBao container with its
 retained Raft volume, require sealed-before-unseal, and recover the **same**
 previously signed bundle through the original restricted worker token from a
 fresh Go process. The independently trusted signer public key is kept
@@ -20,6 +22,10 @@ Acceptance depends on two exact-head workflows: the regular five-job public
 Go/packet qualification and the separate real isolated Raft snapshot run.
 Any failure keeps the PR open. The original snapshot is sensitive key custody
 even for synthetic fixtures: never publish it in Git or CI artifacts.
+
+**The corruption negative** rejects a truncated snapshot, not all possible
+malicious modifications or storage-bitrot scenarios. No independent snapshot
+signature verification, offline backup escrow or key-unseal recovery is shown.
 
 **Explicitly unqualified:** fresh-node or cross-host disaster recovery,
 restoring the snapshot into an independently initialized cluster, backup
