@@ -21,7 +21,7 @@ func fixture() (Engine, Principal, time.Time) {
 	return Engine{Store: memoryStore{"g1": {
 		ID: "g1", SubjectID: "actor-1", SessionID: "owned-test-1",
 		IssuerID: "approved-owner", Approved: true,
-		Actions: map[Operation]bool{InspectMetadata: true, StartCollection: true, RecoverSecrets: true, RequestReplay: true},
+		Actions:   map[Operation]bool{InspectMetadata: true, StartCollection: true, RecoverSecrets: true, RequestReplay: true},
 		NotBefore: now.Add(-time.Minute), ExpiresAt: now.Add(time.Minute),
 	}}}, Principal{SubjectID: "actor-1", Role: Human, Authenticated: true}, now
 }
@@ -52,7 +52,7 @@ func TestSharedAdmissionAndRoleBoundaries(t *testing.T) {
 	}
 }
 func TestNegativeScopeTimeAndRevocation(t *testing.T) {
-	engine, principal, now := fixture()
+	_, _, now := fixture()
 	ctx := context.Background()
 	testCases := []struct {
 		name string
@@ -65,10 +65,14 @@ func TestNegativeScopeTimeAndRevocation(t *testing.T) {
 		{"expired", func(_ *Engine, _ *Principal, _ *string, _ *string, at *time.Time) { *at = now.Add(time.Minute) }},
 		{"not-yet-valid", func(_ *Engine, _ *Principal, _ *string, _ *string, at *time.Time) { *at = now.Add(-time.Hour) }},
 		{"revoked", func(e *Engine, _ *Principal, _ *string, _ *string, _ *time.Time) {
-			g := e.Store.(memoryStore)["g1"]; g.Revoked = true; e.Store.(memoryStore)["g1"] = g
+			g := e.Store.(memoryStore)["g1"]
+			g.Revoked = true
+			e.Store.(memoryStore)["g1"] = g
 		}},
 		{"not-approved", func(e *Engine, _ *Principal, _ *string, _ *string, _ *time.Time) {
-			g := e.Store.(memoryStore)["g1"]; g.Approved = false; e.Store.(memoryStore)["g1"] = g
+			g := e.Store.(memoryStore)["g1"]
+			g.Approved = false
+			e.Store.(memoryStore)["g1"] = g
 		}},
 		{"nil-store", func(e *Engine, _ *Principal, _ *string, _ *string, _ *time.Time) { e.Store = nil }},
 		{"no-scope", func(_ *Engine, _ *Principal, _ *string, s *string, _ *time.Time) { *s = "" }},
