@@ -13,7 +13,8 @@ cooperative writers either win once or read the already committed record.
 An existing key with a different subject, session or grant **fails closed**.
 
 Reopening the store preserves proposal IDs across process restarts. Tests
-exercise 50 concurrent calls across two store objects, restart/reopen,
+exercise 50 concurrent calls across two store objects plus **ten concurrent
+independent OS processes** followed by a separate recovery process, restart/reopen,
 foreign-session and foreign-principal collision, corrupt/symlinked records,
 incorrect directory permissions, cancellation and revoked grants. No network
 listener, privileged process, real evidence, or production credential is used.
