@@ -1,0 +1,34 @@
+name: Isolated persistent OpenBao restart RDT&E
+on:
+  pull_request:
+    paths:
+      - 'pkg/kmsbundle/**'
+      - 'tests/openbao_persistent_rdte.sh'
+      - '.github/workflows/openbao-persistent-rdte.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'pkg/kmsbundle/**'
+      - 'tests/openbao_persistent_rdte.sh'
+      - '.github/workflows/openbao-persistent-rdte.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  restart:
+    name: persistent owned-test OpenBao restart and same-bundle recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Isolated file-backed server restart (owned synthetic evidence only)
+        shell: bash
+        run: bash tests/openbao_persistent_rdte.sh
