@@ -104,6 +104,26 @@ docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$con
   bao write transit/keys/after-snapshot-only derived=true convergent_encryption=false exportable=false >/dev/null
 docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
   bao read transit/keys/after-snapshot-only >/dev/null
+
+# Red-team control: a deliberately truncated private snapshot must not be
+# accepted or roll back the live store. No sensitive snapshot contents are
+# printed, and the corrupt file is destroyed with the ephemeral container.
+if [[ "$(stat -c %s "$scratch/owned-raft.snap")" -le 1024 ]]; then
+  echo "Raft snapshot too small for deliberate truncation negative" >&2
+  exit 1
+fi
+dd if="$scratch/owned-raft.snap" of="$scratch/owned-raft-truncated.snap" bs=512 count=1 status=none
+chmod 0600 "$scratch/owned-raft-truncated.snap"
+docker cp "$scratch/owned-raft-truncated.snap" "$container:/tmp/owned-raft-truncated.snap" >/dev/null
+if docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
+    bao operator raft snapshot restore /tmp/owned-raft-truncated.snap >/dev/null 2>&1; then
+  echo "Invalid Raft snapshot was accepted" >&2
+  exit 1
+fi
+# A rejected snapshot must not destroy the pre-restore synthetic test state.
+docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
+  bao read transit/keys/after-snapshot-only >/dev/null
+
 docker exec -e BAO_ADDR="http://127.0.0.1:8200" -e BAO_TOKEN="$root_token" "$container" \
   bao operator raft snapshot restore /tmp/owned-raft.snap >/dev/null
 # A no-op restore is a failed qualification; the later key must be absent.
