@@ -3,12 +3,12 @@
 | Gate | Method | R0 acceptance | Remaining |
 | --- | --- | --- | --- |
 | Source safety | Public-source inspection, no keys/network targets | source only | maintainer release review |
-| Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | signed synthetic bundles accepted in PR #11, complete signed KMS bundle + ephemeral real OpenBao in PRs #15/#16 | isolated file-backed restart and same-node Raft rollback PASSED; still OPEN: fresh-node/off-host recovery, HA, immutable storage, hostile-filesystem custody, streaming and Windows ACL |
+| Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | signed bundle + isolated live OpenBao in PRs #11/#15/#16; file-backed restart #18 and same-node Raft snapshot rollback #23 PASS | fresh-node/off-host recovery, HA, immutable storage, hostile-filesystem custody, streaming and Windows ACL |
 | Correlation | Multi-leg/task join hints with ambiguity and no fabricated authority | synthetic tests | real CDP / MCP / QUIC clocks and reconnects |
 | Packet source | Owned Linux loopback TCP TLS 1.3 via genuine tcpdump loopback packet vantage | PASS: public GHA 42130441758, 15 frames / 6109 bytes | independent physical NIC, other platforms, HTTP/2 and QUIC still open |
 | Decryption | TShark on exact owned kernel PCAP with test-data key log, both directions and no-key negative | PASS: public GHA 42130441758 | independent witness, multi-stream HTTP/2, QUIC and key-update tests remain |
 | Service interface | One authorization policy across human/AT, automation and agent clients | fail-closed policy/controller and idempotent replay-proposal store/process tests in PRs #8/#12/#19/#20/#24 | trusted identity/grant store, live effect enforcement, accessible UI/CLI/MCP and authorization HIL |
-| Cloud CI | Public source-safe tri-OS builds, Linux/macOS Go tests, race detector and owned-test NIC/TShark | PRs #11–#16 exact-head 5/5 PASS, including real isolated OpenBao full-bundle suite in #16 | Windows custody ACL, off-host disaster recovery, production identity/audit and independent vantage remain OPEN |
+| Cloud CI | Public source-safe tri-OS builds, Linux/macOS Go tests, race detector and owned-test NIC/TShark | PRs #11–#24 exact-head acceptance PASS, including isolated live OpenBao Raft suite in #23 | Windows custody ACL, off-host disaster recovery, production identity/audit and independent vantage remain OPEN |
 
 **Sequential promotion rule:** no claim of service-ready, network-decrypted or production authorized status until the applicable gate is exercised on exact source, independently reviewed, and recorded in DLE. Source-only and synthetic passes cannot replace a real packet witness.
 
