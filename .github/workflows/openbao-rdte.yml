@@ -1,0 +1,73 @@
+name: Owned synthetic OpenBao Transit RDT&E
+on:
+  pull_request:
+    paths:
+      - 'pkg/transitclient/**'
+      - '.github/workflows/openbao-rdte.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'pkg/transitclient/**'
+      - '.github/workflows/openbao-rdte.yml'
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  live-transit:
+    name: isolated OpenBao Transit and restricted ACL
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Qualify bounded Transit adapter against an isolated development server
+        shell: bash
+        run: |
+          set -euo pipefail
+          root_token="$(python3 -c 'import secrets; print(secrets.token_hex(20))')"
+          echo "::add-mask::${root_token}"
+          docker run --detach --rm --name evidence-openbao-rdte \
+            --publish 127.0.0.1:8200:8200 \
+            --env BAO_DEV_ROOT_TOKEN_ID="${root_token}" \
+            --env BAO_DEV_LISTEN_ADDRESS="0.0.0.0:8200" \
+            ghcr.io/openbao/openbao@sha256:d24890f589bc57658a43c18faab2afc4fbedaadad3806d5a638e1adaed2dff8d server -dev >/dev/null
+          trap 'docker rm -f evidence-openbao-rdte >/dev/null 2>&1 || true' EXIT
+          ready=0
+          for attempt in $(seq 1 40); do
+            if curl --fail --silent --output /dev/null http://127.0.0.1:8200/v1/sys/health; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          if [[ "${ready}" != "1" ]]; then
+            echo 'Isolated OpenBao health check failed' >&2
+            exit 1
+          fi
+          docker exec -e BAO_TOKEN="${root_token}" -e BAO_ADDR="http://127.0.0.1:8200" \
+            evidence-openbao-rdte bao secrets enable transit
+          docker exec -e BAO_TOKEN="${root_token}" -e BAO_ADDR="http://127.0.0.1:8200" \
+            evidence-openbao-rdte bao write transit/keys/evidence-test \
+            derived=true convergent_encryption=false exportable=false allow_plaintext_backup=false
+          cat > "${RUNNER_TEMP}/evidence-policy.hcl" <<'POLICY'
+          path "transit/encrypt/evidence-test" { capabilities = ["update"] }
+          path "transit/decrypt/evidence-test" { capabilities = ["update"] }
+          path "transit/rewrap/evidence-test" { capabilities = ["update"] }
+          POLICY
+          docker cp "${RUNNER_TEMP}/evidence-policy.hcl" evidence-openbao-rdte:/tmp/evidence-policy.hcl
+          docker exec -e BAO_TOKEN="${root_token}" -e BAO_ADDR="http://127.0.0.1:8200" \
+            evidence-openbao-rdte bao policy write evidence-test /tmp/evidence-policy.hcl
+          scoped_token="$(docker exec -e BAO_TOKEN="${root_token}" -e BAO_ADDR="http://127.0.0.1:8200" \
+            evidence-openbao-rdte bao token create -policy=evidence-test -orphan -format=json | \
+            python3 -c 'import json,sys; print(json.load(sys.stdin)["auth"]["client_token"])')"
+          echo "::add-mask::${scoped_token}"
+          OPENBAO_TEST_ADDR="http://127.0.0.1:8200" OPENBAO_TEST_TOKEN="${scoped_token}" \
+            go test ./pkg/transitclient -run '^TestLiveOpenBaoTransit$' -count=1 -timeout=90s -v
+          echo 'OPENBAO_RDT_E=ISOLATED_SYNTHETIC_PASS; DURABLE_RESTORE=NOT_QUALIFIED'
