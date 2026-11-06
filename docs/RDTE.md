@@ -3,12 +3,12 @@
 | Gate | Method | R0 acceptance | Remaining |
 | --- | --- | --- | --- |
 | Source safety | Public-source inspection, no keys/network targets | source only | maintainer release review |
-| Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | synthetic vault tests; independent Ed25519 attestation primitive accepted in PR #6 | Integration of signing at seal/open, immutable store, large streaming, live KMS and durable recovery |
+| Go custody | File permissions, authenticated AEAD/HMAC, recovery and negatives | signed synthetic bundles accepted in PR #11, complete signed KMS bundle + ephemeral real OpenBao in PRs #15/#16 | persistent KMS restart/backup/restore, immutable storage, hostile-filesystem custody, streaming and Windows ACL |
 | Correlation | Multi-leg/task join hints with ambiguity and no fabricated authority | synthetic tests | real CDP / MCP / QUIC clocks and reconnects |
 | Packet source | Owned Linux loopback TCP TLS 1.3 via genuine tcpdump loopback packet vantage | PASS: public GHA 42130441758, 15 frames / 6109 bytes | independent physical NIC, other platforms, HTTP/2 and QUIC still open |
 | Decryption | TShark on exact owned kernel PCAP with test-data key log, both directions and no-key negative | PASS: public GHA 42130441758 | independent witness, multi-stream HTTP/2, QUIC and key-update tests remain |
-| Service interface | One authorization policy across human/AT, automation and agent clients | fail-closed pure policy tests accepted in PR #8 | trusted identity/grant store, live effect enforcement, accessible UI/CLI/MCP and authorization HIL |
-| Cloud CI | Public source-safe tri-OS builds, Linux/macOS Go tests, race detector and owned-test NIC/TShark | PR #6, #7 and #8 exact-head 5/5 PASS | Windows vault custody ACL NOT QUALIFIED; live OpenBao and independent vantage remain OPEN |
+| Service interface | One authorization policy across human/AT, automation and agent clients | fail-closed policy and nonprivileged controller tests accepted in PRs #8/#12 | trusted identity/grant store, live effect enforcement, accessible UI/CLI/MCP and authorization HIL |
+| Cloud CI | Public source-safe tri-OS builds, Linux/macOS Go tests, race detector and owned-test NIC/TShark | PRs #11–#16 exact-head 5/5 PASS, including real isolated OpenBao full-bundle suite in #16 | Windows vault custody ACL, persistent OpenBao recovery and independent vantage remain OPEN |
 
 **Sequential promotion rule:** no claim of service-ready, network-decrypted or production authorized status until the applicable gate is exercised on exact source, independently reviewed, and recorded in DLE. Source-only and synthetic passes cannot replace a real packet witness.
 
@@ -62,5 +62,15 @@ remain unqualified.
 - [PR #6](https://github.com/SemperSupra/evidence-service/pull/6), merge `5ab9804`: independently trusted Ed25519 manifest signature primitive; public Actions [42133859631](https://github.com/SemperSupra/evidence-service/actions/runs/42133859631) 5/5 PASS. The service does not yet write signed manifest receipts as part of its retention transaction.
 - [PR #7](https://github.com/SemperSupra/evidence-service/pull/7), merge `eb893bd`: derived-context DEK wrap/unwrap/rewrap OpenBao adapter; public Actions [42152659894](https://github.com/SemperSupra/evidence-service/actions/runs/42152659894) 5/5 PASS. Unit tests use an HTTP mock, not a live OpenBao instance or durable key store.
 - [PR #8](https://github.com/SemperSupra/evidence-service/pull/8), merge `5ffcd47`: common fail-closed admission decision primitive; [first CI 42152663498](https://github.com/SemperSupra/evidence-service/actions/runs/42152663498) failed formatting and unused test variables, corrected in-place and [42152972331](https://github.com/SemperSupra/evidence-service/actions/runs/42152972331) passed 5/5. No verified identity, grants database or deployed actuator is claimed.
+
+## Latest accepted custody and CI receipts (2026-11-06)
+
+- [PR #10](https://github.com/SemperSupra/evidence-service/pull/10): disposable OpenBao test with derived Transit key and scoped-token ACL negatives.
+- [PR #11](https://github.com/SemperSupra/evidence-service/pull/11): signed synthetic bundle publication and recovery; forged independently re-MACed manifest rejected.
+- [PR #12](https://github.com/SemperSupra/evidence-service/pull/12): common metadata/replay-proposal controller; expired and revoked grants yield no effect.
+- [PR #13](https://github.com/SemperSupra/evidence-service/pull/13): isolated real Transit rotate/rewrap, old-key recovery, wrong-context and unauthorized rotation negatives. First malformed-selector and formatting failures remain in DLE.
+- [PR #14](https://github.com/SemperSupra/evidence-service/pull/14): bounded cache-first packet tool installation; genuine TCP/TShark positive/negative capture acceptance preserved.
+- [PR #15](https://github.com/SemperSupra/evidence-service/pull/15): signed synthetic KMS-bound evidence bundle with fake-wrapper negative tests.
+- [PR #16](https://github.com/SemperSupra/evidence-service/pull/16): exact head `2b1262e3019430ee01fbdf7df0ae6081d99559a9`, public [five-job source-safe CI 42227284340](https://github.com/SemperSupra/evidence-service/actions/runs/42227284340) **PASS**, [isolated full-bundle OpenBao CI 42227284289](https://github.com/SemperSupra/evidence-service/actions/runs/42227284289) **PASS**. This proves the *test-data full-bundle API path*, not a persistent or operational vault.
 
 **Housekeeping:** root DLE #1 remains authoritative; closed/accepted PRs are squash-merged and not recreated as overlapping issues. Repo `delete_branch_on_merge=false`. Historical branch refs may remain despite merged content; no automatic pruning or force-push workaround is authorized through this connector. For artifact placement, public Git stores code, tests and sanitized receipts only; encrypted restricted captures and key custody remain outside the public repo.
