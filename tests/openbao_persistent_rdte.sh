@@ -16,10 +16,9 @@ cleanup() {
 trap cleanup EXIT
 
 cat > "$scratch/openbao.hcl" <<'CONFIG'
-disable_mlock = true
 api_addr = "http://127.0.0.1:8200"
 storage "file" {
-  path = "/openbao/data"
+  path = "/openbao/file"
 }
 listener "tcp" {
   address = "0.0.0.0:8200"
@@ -31,18 +30,12 @@ CONFIG
 chmod 0644 "$scratch/openbao.hcl"
 
 docker volume create "$volume" >/dev/null
-# A fresh Docker volume is owned by root. OpenBao's image intentionally runs
-# unprivileged; give only that image user access to its private data volume.
-image_uid="$(docker run --rm --entrypoint /bin/sh "$image" -c 'id -u')"
-image_gid="$(docker run --rm --entrypoint /bin/sh "$image" -c 'id -g')"
-docker run --rm --user 0 --entrypoint /bin/sh \
-  --mount "type=volume,src=$volume,dst=/openbao/data" "$image" \
-  -c 'chown "$1:$2" /openbao/data && chmod 0700 /openbao/data' \
-  _ "$image_uid" "$image_gid"
+# /openbao/file already exists and is owned by the image's unprivileged
+# openbao user; Docker copies its ownership when initializing the volume.
 start_server() {
   docker run --detach --name "$container" \
     --publish 127.0.0.1:8200:8200 \
-    --mount "type=volume,src=$volume,dst=/openbao/data" \
+    --mount "type=volume,src=$volume,dst=/openbao/file" \
     --mount "type=bind,src=$scratch/openbao.hcl,dst=/etc/openbao/config.hcl,readonly" \
     "$image" server -config=/etc/openbao/config.hcl >/dev/null
   ready=0
