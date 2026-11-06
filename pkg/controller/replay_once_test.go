@@ -47,8 +47,8 @@ func (q *onceTestQueue) ProposeOnce(ctx context.Context, intent ProposalIntent) 
 	q.commits++
 	proposal := ReplayProposal{
 		ProposalID: fmt.Sprintf("test-proposal-%d", q.commits),
-		SessionID: intent.SessionID,
-		Accepted: true,
+		SessionID:  intent.SessionID,
+		Accepted:   true,
 	}
 	q.records[intent.IdempotencyKey] = storedProposal{intent: intent, proposal: proposal}
 	return proposal, nil
