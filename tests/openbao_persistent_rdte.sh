@@ -40,7 +40,7 @@ docker run --rm --user 0 --entrypoint /bin/sh \
   -c 'chown "$1:$2" /openbao/data && chmod 0700 /openbao/data' \
   _ "$image_uid" "$image_gid"
 start_server() {
-  docker run --detach --rm --name "$container" \
+  docker run --detach --name "$container" \
     --publish 127.0.0.1:8200:8200 \
     --mount "type=volume,src=$volume,dst=/openbao/data" \
     --mount "type=bind,src=$scratch/openbao.hcl,dst=/etc/openbao/config.hcl,readonly" \
@@ -55,6 +55,10 @@ start_server() {
   done
   if [[ "$ready" != 1 ]]; then
     echo "Persistent OpenBao fixture failed health admission" >&2
+    # Pre-initialization diagnostic only: no vault tokens, shares or user data
+    # exist at this point. Preserve first error instead of blindly retrying.
+    docker inspect --format '{{.State.Status}} {{.State.ExitCode}}' "$container" >&2 || true
+    docker logs --tail 35 "$container" >&2 || true
     exit 1
   fi
 }
