@@ -28,5 +28,5 @@ fi
 command -v tcpdump >/dev/null
 command -v tshark >/dev/null
 # Version receipts contain no TLS keys, capture content or credentials.
-tcpdump --version | head -n 1
-tshark --version | head -n 1
+tcpdump --version | sed -n '1p'
+tshark --version | sed -n '1p'
