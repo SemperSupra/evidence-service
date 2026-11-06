@@ -4,7 +4,7 @@ The source-safe `pkg/transitclient` adapter calls the existing OpenBao
 Transit `encrypt`, `decrypt`, and `rewrap` API for one 32-byte DEK at a
 time. It does **not** start OpenBao, provision tokens or keys, manage signing
 keys, seal packet evidence, authorize callers, or claim a real-vault recovery
-drill. Unit tests use a localhost synthetic HTTP mock, never service credentials.
+drill. Unit tests use a localhost synthetic HTTP mock. Separate isolated public-runner tests use a **real disposable OpenBao dev server**, freshly generated masked test tokens and a restricted derived key; no production credentials are admitted.
 
 ## Contract and security invariants
 
@@ -30,11 +30,13 @@ drill. Unit tests use a localhost synthetic HTTP mock, never service credentials
 1. **DONE (source-safe mock):** request schema and derivation-context propagation;
    synthetic wrap/unwrap/rewrap; wrong scope, unsafe endpoint, redirect and
    redacted-error negative tests.
-2. **OPEN:** actual isolated OpenBao instance, correct key configuration and
-   ACL-negative tests, rotation, rewrap, restart and backup/restore.
-3. **OPEN:** integrate the independently authorized worker with evidence-vault
-   manifest/ciphertext and signing provenance; prohibit ordinary agents from
-   invoking raw-key unwrapping.
+2. **DONE (disposable isolated server):** actual OpenBao-derived key,
+   scoped-token ACL negatives, rotate/rewrap and old-ciphertext recovery
+   (PRs #10/#13). **OPEN:** persistent restart, backup/restore and audit.
+3. **DONE (test-only bundle composition):** signed manifest + wrapped bundle
+   KEK and full live OpenBao synthetic recovery (PRs #15/#16). **OPEN:** real
+   approved worker identity and effect-boundary admission; agents must never
+   receive a raw-key retrieval endpoint.
 4. **OPEN:** cross-platform host custody, auditing/revocation, failure and
    network-partition drills. Do not claim production KMS.
 
