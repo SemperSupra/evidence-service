@@ -67,9 +67,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
-      - name: Install open-source packet dissectors
-        run: |
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq tcpdump tshark
+      - name: Install open-source packet dissectors (bounded and cache-first)
+        shell: bash
+        run: bash tests/install_packet_tools.sh
       - name: Genuine OS packet capture of owned loopback TLS fixture
         run: python3 tests/owned_tls_nic.py --full
