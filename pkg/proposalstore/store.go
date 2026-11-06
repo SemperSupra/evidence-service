@@ -24,9 +24,9 @@ const maxRecord = 4096
 
 var (
 	ErrUnsafeDirectory = errors.New("proposal store requires owner-private directory")
-	ErrConflict = errors.New("idempotency key already bound to another scope")
-	ErrCorrupt = errors.New("proposal record corrupt or unsafe")
-	ErrLegacy = errors.New("non-idempotent proposal path disabled")
+	ErrConflict        = errors.New("idempotency key already bound to another scope")
+	ErrCorrupt         = errors.New("proposal record corrupt or unsafe")
+	ErrLegacy          = errors.New("non-idempotent proposal path disabled")
 )
 
 var token = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$`)
@@ -34,7 +34,7 @@ var token = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$`)
 type Store struct{ directory string }
 
 type record struct {
-	Intent controller.ProposalIntent `json:"intent"`
+	Intent   controller.ProposalIntent `json:"intent"`
 	Proposal controller.ReplayProposal `json:"proposal"`
 }
 
@@ -116,8 +116,8 @@ func (s *Store) ProposeOnce(ctx context.Context, intent controller.ProposalInten
 	}
 	proposal := controller.ReplayProposal{
 		ProposalID: "proposal-" + hex.EncodeToString(id),
-		SessionID: intent.SessionID,
-		Accepted: true,
+		SessionID:  intent.SessionID,
+		Accepted:   true,
 	}
 	raw, err := json.Marshal(record{Intent: intent, Proposal: proposal})
 	if err != nil || len(raw) > maxRecord {
