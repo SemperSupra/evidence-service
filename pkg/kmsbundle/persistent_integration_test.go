@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -109,7 +108,7 @@ func TestPersistentOpenBaoRestart(t *testing.T) {
 				t.Fatalf("post-restart %s recovery failed: %v", kind, err)
 			}
 		}
-		if _, err := Open(ctx, record.Bundle, evidencevault.TLSKeyLog, wrapper, "wrong-signer", ed25519.PublicKey(key)); !errors.Is(err, errors.New("untrusted KMS binding")) && err == nil {
+		if _, err := Open(ctx, record.Bundle, evidencevault.TLSKeyLog, wrapper, "wrong-signer", ed25519.PublicKey(key)); err == nil {
 			t.Fatal("incorrect signer accepted after recovery")
 		}
 	}
