@@ -67,6 +67,11 @@ type Engine struct{ Store GrantStore }
 func denied(reason string) Decision { return Decision{Reason: reason} }
 
 func roleAllows(role Role, operation Operation) bool {
+	switch operation {
+	case InspectMetadata, RequestReplay, StartCollection, ViewPlaintext, RecoverSecrets, SealEvidence, ExpireEvidence:
+	default:
+		return false
+	}
 	switch role {
 	case Human:
 		return operation != RecoverSecrets
