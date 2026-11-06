@@ -25,8 +25,7 @@ all future clients; do not clone policy logic in separate UI or MCP adapters.
 
 ## Promotion gates
 
-1. **DONE (pure decision unit tests):** exact-subject/session/action/time checks,
-   revocation, disabled approvals, unknown-operation and agent negatives.
+1. **DONE (pure decision/controller tests):** exact-subject/session/action/time checks, revocation, disabled approvals, unknown-operation and agent negatives, plus a nonprivileged shared metadata/replay-proposal controller accepted in PR #12. No real replay execution or key retrieval is exposed.
 2. **OPEN:** verified caller identity, trusted grant issuer/store, authenticated
    source receipts, durable revocation and audit; cross-process behavior.
 3. **OPEN:** one API shared by accessible human UI, CLI and MCP, plus end-to-end

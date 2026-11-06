@@ -19,6 +19,4 @@ not `VERIFIED`, and it does not imply permission, content authenticity, complete
 capture or one-to-one MCP-to-TLS mapping. Future signed collector attestations
 are necessary to upgrade evidence confidence.
 
-Three audiences use the same future admission API: humans/AT can authorize
-within policy, automation uses preexisting scoped grants, and agents may
-request read-only metadata or propose actions without direct key retrieval.
+The source-owned `pkg/admission` and `pkg/controller` now provide one tested nonprivileged decision/control contract. The future deployed human/AT, automation and MCP interfaces must use the **same verified identity, trusted grant store and effect-boundary enforcement**. Agents may inspect authorized metadata or propose actions, but cannot directly retrieve raw keys, decrypt captures or execute replay. This is not yet an authenticated network API.

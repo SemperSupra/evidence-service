@@ -22,9 +22,7 @@ forking OpenBao, TLS, PCAP, Wireshark or the Evidence Service policy engine.
 6. The worker zeros temporary key buffers on a best-effort basis; this is **not**
    a secure-memory, crash-safety or memory-forensics guarantee.
 
-The public unit suite uses synthetic fixtures and an **in-memory fake**
-implementing the same WrapKey/UnwrapKey contract as `transitclient.Client`.
-The fake is never a production security backend.
+The public unit suite uses synthetic fixtures and an **in-memory fake** implementing the same WrapKey/UnwrapKey contract as `transitclient.Client`. In addition, [PR #16](https://github.com/SemperSupra/evidence-service/pull/16) qualified the **complete signed bundle against an isolated real OpenBao dev server**: all three synthetic artifact recoveries, recovery after an authorized Transit rotation, and rejection of a cross-session signed envelope substitution. Neither the fake nor the dev server establishes production durability.
 
 ## Threat and qualification boundaries
 
@@ -45,19 +43,16 @@ The fake is never a production security backend.
   filesystem openat/TOCTOU proof, Windows ACL custody, immutable storage or
   robust recovery after abrupt process termination. The public Windows CI
   lane only compiles this package, not its POSIX custody test suite.
-- Persistent OpenBao KMS, real end-to-end access approval, independently
-  enforced revocation, rotation of stored envelopes, vault backup/restore
-  across process/host restart and human/automation/MCP effect-boundary tests
-  remain **OPEN**. Existing live OpenBao tests qualify **only** the Transit API
-  and synthetic rotation semantics, not this full bundle lifecycle.
+- **Isolated, ephemeral full-bundle Transit interoperability is accepted.** Persistent OpenBao seal/unseal, backup/restore across process or host restart, rewrapping and re-signing stored envelope records, immutable storage, real end-to-end access approval, independent revocation and human/automation/MCP effect-boundary tests remain **OPEN**.
 - No production TLS session-key logging, live third-party tunnels, sovereign
   environment data or private evidence is admitted in public source or CI.
 
 ## Next promotion gate
 
-Wire the same bundle-envelope integration test to a disposable *real* OpenBao
-instance with a restricted token; exercise wrap/recover, key rotation, rewrap,
-manifest signing and wrong-scope negatives on exact source, then separately
-qualify persistent restore and audit. The signing key must remain independent
-of Transit and artifact storage. See authoritative
+Admit a persistent *isolated* OpenBao backend with retained storage and
+restricted test keys; qualify service restart/unseal, backup/restore, deliberate
+key rotation, audit trails, and recovery of the exact signed bundle after
+restart. Separately qualify immutable storage and authorized effect-boundary
+enforcement. The signing key must remain independent of Transit and the
+artifact store. See authoritative
 [Evidence Service DLE #1](https://github.com/SemperSupra/evidence-service/issues/1).
