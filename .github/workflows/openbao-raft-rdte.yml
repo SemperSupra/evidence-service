@@ -29,6 +29,9 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
+      - name: Shell parser qualification
+        shell: bash
+        run: bash -n tests/openbao_raft_snapshot_rdte.sh
       - name: Real isolated OpenBao Raft snapshot rollback with signed synthetic bundle
         shell: bash
         run: bash tests/openbao_raft_snapshot_rdte.sh
