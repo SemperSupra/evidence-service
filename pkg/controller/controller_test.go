@@ -19,7 +19,7 @@ func (s *testGrantStore) Lookup(_ context.Context, id string) (admission.Grant, 
 }
 
 type testMetadata struct {
-	calls int
+	calls   int
 	summary Summary
 }
 
@@ -42,7 +42,7 @@ func setup() (Controller, admission.Principal, *testGrantStore, *testMetadata, *
 		IssuerID: "test-approver", Approved: true,
 		Actions: map[admission.Operation]bool{
 			admission.InspectMetadata: true,
-			admission.RequestReplay: true,
+			admission.RequestReplay:   true,
 		},
 		NotBefore: now.Add(-time.Minute), ExpiresAt: now.Add(time.Minute),
 	}}
