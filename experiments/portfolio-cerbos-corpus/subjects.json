@@ -1,0 +1,9 @@
+{
+  "alice": {"roles": ["reader"], "shelf": "a"},
+  "bob": {"roles": ["editor"], "shelf": "a"},
+  "carol": {"roles": ["publisher"], "shelf": "a"},
+  "agent-1": {"roles": ["agent_requester"], "shelf": "a"},
+  "lib-1": {"roles": ["librarian"], "org": "example"},
+  "gha-job-1": {"roles": ["workflow"], "repo": "example/synthetic"},
+  "dave@policy-v1": {"roles": ["reader"], "shelf": "b"}
+}
