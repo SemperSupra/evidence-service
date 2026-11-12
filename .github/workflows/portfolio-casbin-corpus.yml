@@ -33,16 +33,12 @@ jobs:
         run: |
           set -euo pipefail
           go version
-          go mod tidy
+          go mod download
           go mod verify
-          echo 'GO_MOD_BEGIN'
-          cat go.mod
-          echo 'GO_MOD_END'
-          echo 'GO_SUM_BEGIN'
-          cat go.sum
-          echo 'GO_SUM_END'
-          go vet ./...
-          go test -v -count=3 -timeout=3m ./...
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+          go vet -mod=readonly ./...
+          go test -mod=readonly -v -count=3 -timeout=3m ./...
           echo 'NATIVE_ENGINE=CASBIN_3_11; IDENTITY_SIGNATURE=NOT_RUN; PROVIDER_REVOCATION=NOT_RUN; CREDENTIALS=NONE'
-          echo 'DEPENDENCY_CLOSURE=R1_DISCOVERY_NOT_FROZEN'
+          echo 'DEPENDENCY_CLOSURE=PINNED_GO_MOD_GO_SUM'
           go list -m all
