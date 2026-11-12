@@ -1,0 +1,17 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: repository
+  rules:
+    - actions: ["repository.create.request"]
+      effect: EFFECT_ALLOW
+      roles: ["librarian"]
+      condition:
+        match:
+          expr: request.resource.attr.org == request.principal.attr.org
+    - actions: ["repository.read"]
+      effect: EFFECT_ALLOW
+      roles: ["workflow"]
+      condition:
+        match:
+          expr: request.resource.attr.repo == request.principal.attr.repo
