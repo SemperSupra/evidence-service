@@ -1,0 +1,38 @@
+name: Portfolio Cerbos native RDT&E (public synthetic)
+on:
+  pull_request:
+    paths:
+      - 'experiments/portfolio-cerbos/**'
+      - '.github/workflows/portfolio-cerbos-rdte.yml'
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-cerbos-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  cerbos-red-blue:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Acquire exact tagged upstream container (R0 discovery)
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker pull ghcr.io/cerbos/cerbos:0.57.0
+          docker image inspect ghcr.io/cerbos/cerbos:0.57.0 --format '{{json .RepoDigests}}'
+          echo 'CERBOS_IMAGE_DIGEST=OBSERVED_NOT_PINNED; native signed-release verification is a promotion gate'
+      - name: RED - source-documented naive multi-role allow
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network=none -v "$PWD/experiments/portfolio-cerbos/naive:/policies:ro" ghcr.io/cerbos/cerbos:0.57.0 compile --output=json --color=never /policies
+          echo 'CERBOS_RED=MULTI_ROLE_ALLOW_AS_DOCUMENTED; THIS IS NOT OUR DESIRED SECURITY POSTURE'
+      - name: BLUE - explicit deny and resource-scope treatment
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network=none -v "$PWD/experiments/portfolio-cerbos/hardened:/policies:ro" ghcr.io/cerbos/cerbos:0.57.0 compile --output=json --color=never /policies
+          echo 'CERBOS_BLUE=POLICY_ONLY_HARDENING_TESTED; AUTHN=NOT_RUN; LIVE_REVOCATION=NOT_RUN'
