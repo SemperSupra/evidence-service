@@ -1,0 +1,405 @@
+{
+  "schema": "portfolio-access-oracle/v0",
+  "cases": [
+    {
+      "id": "reader-a",
+      "scenario": "reader-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "reader role scoped to shelf a"
+    },
+    {
+      "id": "reader-b-denied",
+      "scenario": "reader-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:b",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "cross-shelf scope"
+    },
+    {
+      "id": "editor-a-write",
+      "scenario": "editor-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "bob",
+        "authenticated": true
+      },
+      "action": "shelf.write",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "editor scope"
+    },
+    {
+      "id": "editor-b-denied",
+      "scenario": "editor-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "bob",
+        "authenticated": true
+      },
+      "action": "shelf.write",
+      "resource": "shelf:b",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "cross-shelf edit denied"
+    },
+    {
+      "id": "editor-inherits-read",
+      "scenario": "editor-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "bob",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "reader inherited"
+    },
+    {
+      "id": "publisher-request",
+      "scenario": "publisher-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "carol",
+        "authenticated": true
+      },
+      "action": "publication.release.request",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "request allowed not effect execution"
+    },
+    {
+      "id": "publisher-no-approve",
+      "scenario": "publisher-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "carol",
+        "authenticated": true
+      },
+      "action": "publication.release.approve",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "independent approval required"
+    },
+    {
+      "id": "agent-release-request",
+      "scenario": "agent-grant-a",
+      "principal": {
+        "kind": "agent",
+        "issuer": "synthetic:oidc",
+        "subject": "agent-1",
+        "authenticated": true
+      },
+      "action": "publication.release.request",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "bounded agent request"
+    },
+    {
+      "id": "agent-self-approval",
+      "scenario": "agent-grant-a",
+      "principal": {
+        "kind": "agent",
+        "issuer": "synthetic:oidc",
+        "subject": "agent-1",
+        "authenticated": true
+      },
+      "action": "publication.release.approve",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "agent cannot self-approve"
+    },
+    {
+      "id": "librarian-repo-request",
+      "scenario": "librarian-org-grant",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "lib-1",
+        "authenticated": true
+      },
+      "action": "repository.create.request",
+      "resource": "org:example",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "librarian request limited to synthetic org"
+    },
+    {
+      "id": "librarian-org-admin",
+      "scenario": "librarian-org-grant",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "lib-1",
+        "authenticated": true
+      },
+      "action": "repository.admin.unrestricted",
+      "resource": "org:example",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "no blanket admin authority"
+    },
+    {
+      "id": "missing-authentication",
+      "scenario": "reader-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": false
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "principal unauthenticated"
+    },
+    {
+      "id": "untrusted-issuer",
+      "scenario": "reader-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:untrusted",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "issuer mismatch"
+    },
+    {
+      "id": "wrong-audience",
+      "scenario": "reader-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "unrelated-service",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "audience mismatch"
+    },
+    {
+      "id": "expired-grant",
+      "scenario": "reader-expired",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "expired grant"
+    },
+    {
+      "id": "revoked-grant",
+      "scenario": "reader-revoked",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "revoked grant"
+    },
+    {
+      "id": "explicit-deny-override",
+      "scenario": "reader-with-deny",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "explicit deny overrides allow"
+    },
+    {
+      "id": "unknown-action",
+      "scenario": "reader-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.destroy",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "unknown operation"
+    },
+    {
+      "id": "stale-policy",
+      "scenario": "reader-stale",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0-stale",
+      "expected": "deny",
+      "reason": "stale revision fails closed"
+    },
+    {
+      "id": "policy-change-before",
+      "scenario": "reader-pre-change",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "dave",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:b",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "not yet granted in v0"
+    },
+    {
+      "id": "policy-change-after",
+      "scenario": "reader-post-change",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "dave",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:b",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v1",
+      "expected": "allow",
+      "reason": "policy-only grant in v1"
+    },
+    {
+      "id": "publish-effect-admission",
+      "scenario": "publisher-grant-a",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "carol",
+        "authenticated": true
+      },
+      "action": "publication.release.publish",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "native release admission required"
+    },
+    {
+      "id": "foreign-workset",
+      "scenario": "reader-foreign-workset",
+      "principal": {
+        "kind": "human",
+        "issuer": "synthetic:oidc",
+        "subject": "alice",
+        "authenticated": true
+      },
+      "action": "shelf.read",
+      "resource": "shelf:a",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "workset mismatch"
+    },
+    {
+      "id": "workload-oidc-allowed",
+      "scenario": "workload-verified",
+      "principal": {
+        "kind": "automation",
+        "issuer": "synthetic:github-oidc",
+        "subject": "gha-job-1",
+        "authenticated": true
+      },
+      "action": "repository.read",
+      "resource": "repo:example/synthetic",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "allow",
+      "reason": "verified workflow identity"
+    },
+    {
+      "id": "workload-oidc-foreign",
+      "scenario": "workload-untrusted",
+      "principal": {
+        "kind": "automation",
+        "issuer": "synthetic:github-oidc",
+        "subject": "gha-job-2",
+        "authenticated": true
+      },
+      "action": "repository.read",
+      "resource": "repo:example/synthetic",
+      "audience": "portfolio-api",
+      "policy_revision": "policy-v0",
+      "expected": "deny",
+      "reason": "wrong repository claim"
+    }
+  ]
+}
