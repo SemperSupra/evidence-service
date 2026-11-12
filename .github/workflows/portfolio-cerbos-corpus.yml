@@ -36,9 +36,19 @@ jobs:
           image='ghcr.io/cerbos/cerbos@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300'
           docker pull "$image"
           docker image inspect "$image" --format '{{json .RepoDigests}}'
+          set +e
           docker run --rm --network=none --read-only \
             -v "$RUNNER_TEMP/cerbos-policy:/policies:ro" \
             "$image" compile --output=json --color=never /policies > "$RUNNER_TEMP/cerbos-result.json"
+          native_status=$?
+          set -e
+          echo 'CERBOS_NATIVE_REPORT_BEGIN'
+          cat "$RUNNER_TEMP/cerbos-result.json"
+          echo 'CERBOS_NATIVE_REPORT_END'
+          if [ "$native_status" -ne 0 ]; then
+            echo "CERBOS_NATIVE_FAILED_STATUS=$native_status; KEEP_FIRST_FAILURE"
+            exit "$native_status"
+          fi
           python3 - "$RUNNER_TEMP/cerbos-result.json" experiments/portfolio-access-oracle/corpus.json <<'PY'
           import json,sys
           r=json.load(open(sys.argv[1])); c=json.load(open(sys.argv[2]))
