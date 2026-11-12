@@ -63,3 +63,38 @@ jobs:
           print('CERBOS_NEUTRAL_CORPUS=25/25; NATIVE_CERBOS_POLICY_ASSERTIONS=25; SYNTHETIC_TRUST_INPUTS=7')
           print('AUTHN_CRYPTO=NOT_RUN; LIVE_REVOCATION=NOT_RUN; IDP_AND_EFFECT_BOUNDARIES=NOT_RUN')
           PY
+      - name: RED mutation — flipped oracle must fail native Cerbos
+        shell: bash
+        run: |
+          set -euo pipefail
+          image='ghcr.io/cerbos/cerbos@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300'
+          mkdir -p "$RUNNER_TEMP/cerbos-mutated"
+          cp experiments/portfolio-cerbos-corpus/{shelf,publication,repository}.yaml "$RUNNER_TEMP/cerbos-mutated/"
+          python3 - experiments/portfolio-access-oracle/corpus.json "$RUNNER_TEMP/mutated-oracle.json" <<'PY'
+          import json,sys
+          c=json.load(open(sys.argv[1]))
+          assert c['cases'][0]['id']=='reader-a' and c['cases'][0]['expected']=='allow'
+          c['cases'][0]['expected']='deny'
+          with open(sys.argv[2],'w') as out:
+              json.dump(c,out)
+          PY
+          python3 experiments/portfolio-cerbos-corpus/generate_tests.py \
+            "$RUNNER_TEMP/mutated-oracle.json" \
+            experiments/portfolio-cerbos-corpus/subjects.json \
+            "$RUNNER_TEMP/cerbos-mutated/corpus_test.yaml"
+          set +e
+          docker run --rm --network=none --read-only \
+            -v "$RUNNER_TEMP/cerbos-mutated:/policies:ro" \
+            "$image" compile --output=json --color=never /policies > "$RUNNER_TEMP/cerbos-mutated-result.json"
+          mutation_status=$?
+          set -e
+          python3 - "$RUNNER_TEMP/cerbos-mutated-result.json" "$mutation_status" <<'PY'
+          import json,sys
+          d=json.load(open(sys.argv[1]))
+          suites=d.get('suites',[])
+          if int(sys.argv[2])==0 or len(suites)!=1 or suites[0].get('summary',{}).get('overallResult')!='RESULT_FAILED':
+              raise SystemExit('RED oracle mutation was not rejected as a native test failure')
+          if not any(v.get('result')=='RESULT_FAILED' for v in suites[0].get('summary',{}).get('resultCounts',[])):
+              raise SystemExit('missing native failure count for flipped oracle')
+          print('CERBOS_ORACLE_MUTATION=EXPECTED_NATIVE_FAILURE; EXPECTED_VERDICT_ECHO=REJECTED')
+          PY
