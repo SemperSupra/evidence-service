@@ -1,0 +1,23 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: shelf
+  rules:
+    - actions: ["shelf.read"]
+      effect: EFFECT_ALLOW
+      roles: ["reader", "editor"]
+      condition:
+        match:
+          expr: request.resource.attr.shelf == request.principal.attr.shelf
+    - actions: ["shelf.write"]
+      effect: EFFECT_ALLOW
+      roles: ["editor"]
+      condition:
+        match:
+          expr: request.resource.attr.shelf == request.principal.attr.shelf
+    - actions: ["shelf.read", "shelf.write"]
+      effect: EFFECT_DENY
+      roles: ["*"]
+      condition:
+        match:
+          expr: request.principal.attr.suspended == true
