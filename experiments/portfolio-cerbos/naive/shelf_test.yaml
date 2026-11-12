@@ -1,0 +1,37 @@
+name: NaiveMultiRoleDenyR0
+description: Expose documented multi-role allow precedence as a red-team finding
+options:
+  strictEvaluation: true
+principals:
+  mixed_roles:
+    id: synthetic-mixed
+    roles: ["reader", "suspended"]
+  reader:
+    id: synthetic-reader
+    roles: ["reader"]
+  suspended:
+    id: synthetic-suspended
+    roles: ["suspended"]
+resources:
+  shelf_a:
+    id: synthetic-shelf-a
+    kind: shelf
+tests:
+  - name: Multi-role allow wins under naive policy
+    input:
+      principals: ["mixed_roles", "reader", "suspended"]
+      resources: ["shelf_a"]
+      actions: ["read"]
+    expected:
+      - principal: mixed_roles
+        resource: shelf_a
+        actions:
+          read: EFFECT_ALLOW
+      - principal: reader
+        resource: shelf_a
+        actions:
+          read: EFFECT_ALLOW
+      - principal: suspended
+        resource: shelf_a
+        actions:
+          read: EFFECT_DENY
