@@ -1,0 +1,55 @@
+name: HardenedMultiRoleDenyR0
+description: Qualify explicit global-scope deny and cross-shelf attribute guard
+options:
+  strictEvaluation: true
+principals:
+  mixed_roles:
+    id: synthetic-mixed
+    roles: ["reader", "suspended"]
+    attr:
+      shelf: a
+      suspended: true
+  reader:
+    id: synthetic-reader
+    roles: ["reader"]
+    attr:
+      shelf: a
+      suspended: false
+resources:
+  shelf_a:
+    id: synthetic-shelf-a
+    kind: shelf
+    attr:
+      shelf: a
+  shelf_b:
+    id: synthetic-shelf-b
+    kind: shelf
+    attr:
+      shelf: b
+tests:
+  - name: Deny overrides another matching role and scope stays narrow
+    input:
+      principals: ["mixed_roles", "reader"]
+      resources: ["shelf_a", "shelf_b"]
+      actions: ["read", "write"]
+    expected:
+      - principal: mixed_roles
+        resource: shelf_a
+        actions:
+          read: EFFECT_DENY
+          write: EFFECT_DENY
+      - principal: mixed_roles
+        resource: shelf_b
+        actions:
+          read: EFFECT_DENY
+          write: EFFECT_DENY
+      - principal: reader
+        resource: shelf_a
+        actions:
+          read: EFFECT_ALLOW
+          write: EFFECT_DENY
+      - principal: reader
+        resource: shelf_b
+        actions:
+          read: EFFECT_DENY
+          write: EFFECT_DENY
