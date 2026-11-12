@@ -1,0 +1,41 @@
+name: Portfolio Casbin native RDT&E (public synthetic)
+on:
+  pull_request:
+    paths:
+      - 'experiments/portfolio-casbin/**'
+      - '.github/workflows/portfolio-casbin-rdte.yml'
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-casbin-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  casbin-native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    env:
+      GOSUMDB: sum.golang.org
+      GOTOOLCHAIN: local
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.23.2'
+          cache: false
+      - name: Native engine source-pinned bootstrap and test
+        shell: bash
+        working-directory: experiments/portfolio-casbin
+        run: |
+          set -euo pipefail
+          go version
+          test "$(go env GOSUMDB)" = 'sum.golang.org'
+          # R0 candidate discovery. This generates an ephemeral go.sum; final
+          # qualification must separately check in the dependency closure.
+          go mod tidy
+          go mod verify
+          go test -v -count=3 -timeout=3m ./...
+          go test -run '^$' -bench '^BenchmarkNativeReadDecision$' -benchtime=100ms -count=3 ./...
+          printf 'CASBIN_BAKEOFF=SOURCE_SAFE_R0; CREDENTIALS=NONE; AUTHN=NOT_RUN; POLICY_DISTRIBUTION=NOT_RUN\n'
+          go list -m all
