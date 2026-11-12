@@ -1,0 +1,5 @@
+p, reader, shelf:a, shelf:a, shelf.read, allow
+p, editor, shelf:a, shelf:a, shelf.write, allow
+g, alice, reader, shelf:a
+g, bob, editor, shelf:a
+g, editor, reader, shelf:a
