@@ -1,0 +1,11 @@
+apiVersion: api.cerbos.dev/v1
+resourcePolicy:
+  version: default
+  resource: publication
+  rules:
+    - actions: ["publication.release.request"]
+      effect: EFFECT_ALLOW
+      roles: ["publisher", "agent_requester"]
+      condition:
+        match:
+          expr: request.resource.attr.shelf == request.principal.attr.shelf
