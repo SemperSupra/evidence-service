@@ -46,10 +46,12 @@ def main():
                 "reader-expired", "reader-revoked", "reader-foreign-workset"
             )
         )
-        lookup = p["subject"]
-        if lookup == "dave" and revision == "policy-v1":
-            lookup += "@policy-v1"
-        profile = subjects.get(lookup, {}) if trusted else {}
+        if subjects.get("schema") != "synthetic-subject-grants/v1":
+            raise SystemExit("unapproved synthetic subject binding schema")
+        assigned = subjects["revisions"].get(revision, {}).get(
+            p["subject"], subjects["default"].get(p["subject"], {})
+        )
+        profile = assigned if trusted else {}
         roles = profile.get("roles", []) or ["synthetic_no_grant"]
         if not trusted:
             trust_gates += 1
