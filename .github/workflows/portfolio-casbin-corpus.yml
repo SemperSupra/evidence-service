@@ -1,0 +1,42 @@
+name: Portfolio Casbin neutral corpus R1 (public synthetic)
+on:
+  pull_request:
+    paths:
+      - 'experiments/portfolio-access-oracle/**'
+      - 'experiments/portfolio-casbin-corpus/**'
+      - '.github/workflows/portfolio-casbin-corpus.yml'
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-casbin-corpus-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-corpus:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: '1.23.2'
+          cache: false
+      - name: Validate neutral oracle independent of engine
+        run: go test ./experiments/portfolio-access-oracle -count=3
+      - name: Native Casbin 25-case corpus and oracle mutations
+        working-directory: experiments/portfolio-casbin-corpus
+        shell: bash
+        env:
+          GOTOOLCHAIN: local
+          GOSUMDB: sum.golang.org
+        run: |
+          set -euo pipefail
+          go version
+          go mod tidy
+          go mod verify
+          go vet ./...
+          go test -v -count=3 -timeout=3m ./...
+          echo 'NATIVE_ENGINE=CASBIN_3_11; IDENTITY_SIGNATURE=NOT_RUN; PROVIDER_REVOCATION=NOT_RUN; CREDENTIALS=NONE'
+          echo 'DEPENDENCY_CLOSURE=R1_DISCOVERY_NOT_FROZEN'
+          go list -m all
