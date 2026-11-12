@@ -1,0 +1,13 @@
+p, reader, shelf:a, shelf:a, shelf.read, allow
+p, editor, shelf:a, shelf:a, shelf.write, allow
+p, publisher, shelf:a, shelf:a, publication.release.request, allow
+p, agent_requester, shelf:a, shelf:a, publication.release.request, allow
+p, librarian, org:example, org:example, repository.create.request, allow
+p, workflow, repo:example/synthetic, repo:example/synthetic, repository.read, allow
+g, alice, reader, shelf:a
+g, bob, editor, shelf:a
+g, editor, reader, shelf:a
+g, carol, publisher, shelf:a
+g, agent-1, agent_requester, shelf:a
+g, lib-1, librarian, org:example
+g, gha-job-1, workflow, repo:example/synthetic
