@@ -1,0 +1,55 @@
+name: Portfolio Cerbos neutral corpus R1 (public synthetic)
+on:
+  pull_request:
+    paths:
+      - 'experiments/portfolio-access-oracle/**'
+      - 'experiments/portfolio-cerbos-corpus/**'
+      - '.github/workflows/portfolio-cerbos-corpus.yml'
+permissions:
+  contents: read
+concurrency:
+  group: portfolio-cerbos-corpus-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-corpus:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Generate native YAML from immutable reference cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/cerbos-policy"
+          cp experiments/portfolio-cerbos-corpus/{shelf,publication,repository}.yaml "$RUNNER_TEMP/cerbos-policy/"
+          python3 experiments/portfolio-cerbos-corpus/generate_tests.py \
+            experiments/portfolio-access-oracle/corpus.json \
+            experiments/portfolio-cerbos-corpus/subjects.json \
+            "$RUNNER_TEMP/cerbos-policy/corpus_test.yaml"
+          sha256sum experiments/portfolio-access-oracle/corpus.json "$RUNNER_TEMP/cerbos-policy/corpus_test.yaml"
+      - name: Native Cerbos 0.57.0 fixed digest test
+        shell: bash
+        run: |
+          set -euo pipefail
+          image='ghcr.io/cerbos/cerbos@sha256:e5e3b150b3cb0090975605254f255164567d67e233634199fb20972e3eaff300'
+          docker pull "$image"
+          docker image inspect "$image" --format '{{json .RepoDigests}}'
+          docker run --rm --network=none --read-only \
+            -v "$RUNNER_TEMP/cerbos-policy:/policies:ro" \
+            "$image" compile --output=json --color=never /policies > "$RUNNER_TEMP/cerbos-result.json"
+          python3 - "$RUNNER_TEMP/cerbos-result.json" experiments/portfolio-access-oracle/corpus.json <<'PY'
+          import json,sys
+          r=json.load(open(sys.argv[1])); c=json.load(open(sys.argv[2]))
+          suites=r.get('suites',[])
+          if len(suites)!=1:
+              raise SystemExit('expected exactly one native Cerbos test suite')
+          s=suites[0]; summary=s.get('summary',{})
+          expected={'case_'+v['id'].replace('-','_') for v in c['cases']}
+          observed={v.get('name') for v in s.get('testCases',[])}
+          if summary.get('overallResult')!='RESULT_PASSED' or summary.get('testsCount')!=25 or expected!=observed:
+              raise SystemExit('native Cerbos results do not match 25-case oracle identities')
+          print('CERBOS_NEUTRAL_CORPUS=25/25; NATIVE_CERBOS_POLICY_ASSERTIONS=25; SYNTHETIC_TRUST_INPUTS=7')
+          print('AUTHN_CRYPTO=NOT_RUN; LIVE_REVOCATION=NOT_RUN; IDP_AND_EFFECT_BOUNDARIES=NOT_RUN')
+          PY
