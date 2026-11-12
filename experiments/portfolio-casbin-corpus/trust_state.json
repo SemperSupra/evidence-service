@@ -1,0 +1,17 @@
+{
+  "schema": "synthetic-trust-states/v0",
+  "scenarios": {
+    "reader-expired": {
+      "expired": true
+    },
+    "reader-revoked": {
+      "revoked": true
+    },
+    "reader-foreign-workset": {
+      "workset_bound": false
+    },
+    "reader-with-deny": {
+      "policy_overlay": "deny-reader-a"
+    }
+  }
+}
