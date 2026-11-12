@@ -1,0 +1,11 @@
+# Native Casbin evaluation of 25-case neutral corpus
+
+**Authoritative selection DLE:** [SemperSupra/engineering-governance-private #225](https://github.com/SemperSupra/engineering-governance-private/issues/225). The neutral fixture is imported unchanged from stacked source branch [Evidence Service draft PR #28](https://github.com/SemperSupra/evidence-service/pull/28), and must retain its own unmodified test and blob hash. This workcell is RDT&E only, not an Evidence Service runtime capability.
+
+The `model.conf` and `policy_v0.csv`/`policy_v1.csv` files define native Casbin role inheritance, exact resource domains, explicit denies and a policy-only revision granting Dave access to shelf B. The Go harness does **not** switch on case IDs for authorization; it gives Casbin real subject/resource/action inputs. Synthetic preflight inputs (claimed issuer/audience, authenticated flag, lease condition, workset-bound condition) are explicitly separate from native enforcement, configured by `trust_state.json` and not evidence of JWT signature checks, real grants or live revocation. The explicit-deny scenario selects an isolated native policy overlay.
+
+Execution of `TestNeutralCorpusAgainstNativeCasbin` must report **25 cases, 8 allows, 17 denies**, with both native decision and synthetic preflight-gate counts. `TestOracleIsNotEchoedOrCaseIDDriven` changes the expected answer, identity and native policy; an adapter that merely echoes oracle responses should fail.
+
+The synthetic claims are **not trusted external input**. In production, a verified identity provider, a revocation-aware store, an approved policy revision and effect-boundary admission must be independently qualified; no model/client may submit `authenticated=true` as proof. R1 runs public, read-only GitHub Actions with no credentials. It executes actual Casbin v3.11.0, but dependency closure is generated ephemerally in initial discovery and needs full source-pinned `go.sum`/artifact verification before H0 is complete.
+
+This workcell measures H2 *subset source behavior* only. H1, H3, H4, H5, H6, H7 and live H0 promotion remain open. Do not merge based on green CI. Next: reproduce on ARM64, freeze dependencies, run Cerbos through the same reference inputs, and compare fully deployed stacks before weighted selection.
