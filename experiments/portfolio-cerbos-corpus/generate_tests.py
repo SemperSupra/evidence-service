@@ -50,7 +50,7 @@ def main():
         if lookup == "dave" and revision == "policy-v1":
             lookup += "@policy-v1"
         profile = subjects.get(lookup, {}) if trusted else {}
-        roles = profile.get("roles", [])
+        roles = profile.get("roles", []) or ["synthetic_no_grant"]
         if not trusted:
             trust_gates += 1
         attrs = {key: profile[key] for key in ("shelf", "org", "repo") if key in profile}
