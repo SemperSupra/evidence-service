@@ -29,6 +29,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          echo "R083_GO_FMT_PATCH_START"
+          gofmt -d integration/browserparity_consumer_test.go
+          echo "R083_GO_FMT_PATCH_END"
           BAD="$(gofmt -l integration/browserparity_consumer_test.go)"
           if [[ -n "$BAD" ]]; then
             echo "SOURCE_FORMAT_RED=$BAD"
