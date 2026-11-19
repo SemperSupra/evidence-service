@@ -74,13 +74,13 @@ func setup(t *testing.T) syntheticOwner {
 			Schema: "bp-owned-evidence-consumer/v1", SessionID: "owned-session",
 			Generation: 17, TabID: "owned-tab-A", Origin: "http://127.0.0.1",
 			Realm: "synthetic-chat", Catalog: "owned-v1",
-			RequestID: "synthetic-request-01",
+			RequestID:    "synthetic-request-01",
 			ArtifactHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 		},
 		public: pub, private: priv, signer: "synthetic-independent-reviewer",
 		store: g, engine: admission.Engine{Store: g},
 		actor: admission.Principal{SubjectID: "owned-actor", Role: admission.Agent, Authenticated: true},
-		now: now,
+		now:   now,
 	}
 }
 
@@ -149,13 +149,15 @@ func TestExactSignedSelectedTabScopeAndThreeAudiences(t *testing.T) {
 
 func TestFreshValidSignatureDoesNotOverrideForeignTabOrGeneration(t *testing.T) {
 	cases := map[string]func(*ownedManifest){
-		"adjacent-tab": func(x *ownedManifest) { x.TabID = "owned-tab-B" },
-		"old-generation": func(x *ownedManifest) { x.Generation-- },
-		"foreign-origin": func(x *ownedManifest) { x.Origin = "https://example.invalid" },
-		"stale-catalog": func(x *ownedManifest) { x.Catalog = "old" },
-		"foreign-realm": func(x *ownedManifest) { x.Realm = "other" },
+		"adjacent-tab":    func(x *ownedManifest) { x.TabID = "owned-tab-B" },
+		"old-generation":  func(x *ownedManifest) { x.Generation-- },
+		"foreign-origin":  func(x *ownedManifest) { x.Origin = "https://example.invalid" },
+		"stale-catalog":   func(x *ownedManifest) { x.Catalog = "old" },
+		"foreign-realm":   func(x *ownedManifest) { x.Realm = "other" },
 		"foreign-request": func(x *ownedManifest) { x.RequestID = "replay" },
-		"artifact-change": func(x *ownedManifest) { x.ArtifactHash = "0000000000000000000000000000000000000000000000000000000000000000" },
+		"artifact-change": func(x *ownedManifest) {
+			x.ArtifactHash = "0000000000000000000000000000000000000000000000000000000000000000"
+		},
 	}
 	for name, edit := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -209,9 +211,13 @@ func TestSignaturesCannotSelfGrantOrSupplyTrustRoot(t *testing.T) {
 	t.Run("signed-duplicate-json-fields", func(t *testing.T) {
 		dup := bytes.Replace(raw, []byte(`"schema":`), []byte(`"schema":"bp-owned-evidence-consumer/v1","schema":`), 1)
 		reReceipt, err := attestation.Sign(dup, s.signer, s.private)
-		if err != nil { t.Fatal(err) }
+		if err != nil {
+			t.Fatal(err)
+		}
 		// Correct signature over ambiguous bytes is not a canonical data model.
-		if err := attestation.Verify(dup, reReceipt, s.public); err != nil { t.Fatal(err) }
+		if err := attestation.Verify(dup, reReceipt, s.public); err != nil {
+			t.Fatal(err)
+		}
 		if err := s.accept(dup, reReceipt, s.actor, admission.InspectMetadata); err == nil {
 			t.Fatal("signed duplicate JSON keys crossed an exact receiver contract")
 		}
@@ -220,7 +226,7 @@ func TestSignaturesCannotSelfGrantOrSupplyTrustRoot(t *testing.T) {
 
 func TestRevocationExpiryAndUntrustedPrincipalBlockComposedAdmission(t *testing.T) {
 	tests := []struct {
-		name string
+		name   string
 		change func(*syntheticOwner)
 	}{
 		{"no-grant-store", func(s *syntheticOwner) { s.engine.Store = nil }},
@@ -247,20 +253,30 @@ func TestRevocationExpiryAndUntrustedPrincipalBlockComposedAdmission(t *testing.
 func TestIdempotentProposalIsNotBrowserEffectAndRevocationStillWins(t *testing.T) {
 	s := setup(t)
 	dir := filepath.Join(t.TempDir(), "owner-private-proposals")
-	if err := os.Mkdir(dir, 0700); err != nil { t.Fatal(err) }
+	if err := os.Mkdir(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
 	store, err := proposalstore.Open(dir)
-	if err != nil { t.Fatal(err) }
+	if err != nil {
+		t.Fatal(err)
+	}
 	c := controller.Controller{
 		Policy: s.engine, Queue: store,
 		Clock: func() time.Time { return s.now },
 	}
 	raw, sig := s.sign(t, s.expected)
-	if err := s.accept(raw, sig, s.actor, admission.RequestReplay); err != nil { t.Fatal(err) }
+	if err := s.accept(raw, sig, s.actor, admission.RequestReplay); err != nil {
+		t.Fatal(err)
+	}
 	const key = "bp-r083-synthetic-idempotency-01"
 	a, err := c.RequestReplayOnce(context.Background(), s.actor, s.store.grant.ID, s.expected.SessionID, key)
-	if err != nil || a.ProposalID == "" || !a.Accepted { t.Fatalf("proposal only: %+v %v", a, err) }
+	if err != nil || a.ProposalID == "" || !a.Accepted {
+		t.Fatalf("proposal only: %+v %v", a, err)
+	}
 	b, err := c.RequestReplayOnce(context.Background(), s.actor, s.store.grant.ID, s.expected.SessionID, key)
-	if err != nil || b.ProposalID != a.ProposalID { t.Fatal("replay proposal duplicated") }
+	if err != nil || b.ProposalID != a.ProposalID {
+		t.Fatal("replay proposal duplicated")
+	}
 	s.store.grant.Revoked = true
 	if _, err := c.RequestReplayOnce(context.Background(), s.actor, s.store.grant.ID, s.expected.SessionID, key); !errors.Is(err, controller.ErrDenied) {
 		t.Fatal("revoked grant was allowed to access even a previous idempotent proposal")
