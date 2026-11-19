@@ -207,7 +207,7 @@ func TestSignaturesCannotSelfGrantOrSupplyTrustRoot(t *testing.T) {
 		}
 	})
 	t.Run("signed-duplicate-json-fields", func(t *testing.T) {
-		dup := bytes.Replace(raw, []byte(""schema":"), []byte(""schema":"bp-owned-evidence-consumer/v1","schema":"), 1)
+		dup := bytes.Replace(raw, []byte(`"schema":`), []byte(`"schema":"bp-owned-evidence-consumer/v1","schema":`), 1)
 		reReceipt, err := attestation.Sign(dup, s.signer, s.private)
 		if err != nil { t.Fatal(err) }
 		// Correct signature over ambiguous bytes is not a canonical data model.
