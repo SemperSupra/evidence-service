@@ -1,0 +1,47 @@
+name: R083 Public BrowserParity Consumer Composition Source Qualification
+on:
+  push:
+    branches: ["research/r083-bp-consumer-composition-*"]
+permissions:
+  contents: read
+concurrency:
+  group: ev-r083-consumer-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  source-primitive-composition:
+    name: Existing Go admission and attestation ${{ matrix.runner }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 9
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Source format and vet before running real tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          BAD="$(gofmt -l integration/browserparity_consumer_test.go)"
+          if [[ -n "$BAD" ]]; then
+            echo "SOURCE_FORMAT_RED=$BAD"
+            exit 1
+          fi
+          go vet ./integration
+      - name: Execute cross-primitive Go race and source contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          go test -race -count=2 -timeout=5m -v ./integration | tee "$RUNNER_TEMP/r083-go.log"
+          grep -q "BP_R083_SOURCE_PRIMITIVE_RECEIPT=" "$RUNNER_TEMP/r083-go.log"
+          printf 'R083_CONSUMER_COMPOSITION_RECEIPT={"source_sha":"%s","runner":"%s","source_level":"PUBLIC_SYNTHETIC_ONLY","ed25519":"PASS","externally_bound_scope":"PASS","shared_admission":"PASS","replay_proposal_no_effect":"PASS","actual_browser_hil":false,"trusted_issuer_qualified":false,"real_signer_qualified":false,"promotion_authorized":false}\n' "$GITHUB_SHA" "$RUNNER_NAME" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Explicit owner permission boundary
+        if: always()
+        run: echo "Existing public Evidence Service libraries only. No BrowserParity private source, signed real evidence, real operator, production issuer, external receiver or browser effect." >> "$GITHUB_STEP_SUMMARY"
